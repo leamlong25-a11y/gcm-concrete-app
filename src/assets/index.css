@@ -1,0 +1,45 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Khmer+OS+Siemreap&display=swap");
+
+/* កំណត់ឱ្យគ្រប់ Element ទាំងអស់ប្រើប្រាស់ Font Khmer OS Siemreap ជាទូទៅ */
+body {
+  font-family: "Khmer OS Siemreap", sans-serif !important;
+  background-color: #f3f4f6;
+  color: #1f2937;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ជម្រើសបន្ថែមសម្រាប់កែសម្រួល Class ជាក់លាក់ */
+.khmer-font {
+  font-family: "Khmer OS Siemreap", sans-serif !important;
+}
+
+/* រក្សាសញ្ញាព្រួញឡើងចុះ (Spinners) សម្រាប់ Input លេខ */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-invoice,
+  #printable-invoice * {
+    visibility: visible;
+  }
+  #printable-invoice {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 15mm;
+    background: white;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
