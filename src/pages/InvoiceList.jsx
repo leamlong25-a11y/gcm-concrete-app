@@ -22,20 +22,29 @@ export default function InvoiceList() {
   }, []);
 
   const loadData = () => {
-    const data = JSON.parse(localStorage.getItem("gcm_data") || "[]");
-    setInvoices(data);
+    try {
+      const rawData = localStorage.getItem("gcm_data");
+      const data = rawData ? JSON.parse(rawData) : [];
 
-    let ySet = new Set(),
-      cSet = new Set(),
-      mSet = new Set();
-    data.forEach((inv) => {
-      if (inv.dateIssue) ySet.add(inv.dateIssue.split("-")[0]);
-      if (inv.customer) cSet.add(inv.customer);
-      if (inv.marketing) mSet.add(inv.marketing);
-    });
-    setYears(Array.from(ySet).sort().reverse());
-    setCustomers(Array.from(cSet).sort());
-    setMarketings(Array.from(mSet).sort());
+      // ធានាថា data ជា Array ជានិច្ច ដើម្បីការពារការ Error
+      const safeData = Array.isArray(data) ? data : [];
+      setInvoices(safeData);
+
+      let ySet = new Set(),
+        cSet = new Set(),
+        mSet = new Set();
+      safeData.forEach((inv) => {
+        if (inv && inv.dateIssue) ySet.add(inv.dateIssue.split("-")[0]);
+        if (inv && inv.customer) cSet.add(inv.customer);
+        if (inv && inv.marketing) mSet.add(inv.marketing);
+      });
+      setYears(Array.from(ySet).sort().reverse());
+      setCustomers(Array.from(cSet).sort());
+      setMarketings(Array.from(mSet).sort());
+    } catch (err) {
+      console.error("Error loading data:", err);
+      setInvoices([]);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -62,6 +71,7 @@ export default function InvoiceList() {
 
   const filteredInvoices = invoices
     .filter((inv) => {
+      if (!inv) return false;
       const term = searchTerm.toLowerCase();
       const matchTerm =
         inv.customer?.toLowerCase().includes(term) ||

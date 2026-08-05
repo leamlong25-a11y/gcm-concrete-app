@@ -1,23 +1,24 @@
 @import "tailwindcss";
 @import url("https://fonts.googleapis.com/css2?family=Khmer+OS+Siemreap&display=swap");
 
-/* កំណត់ឱ្យគ្រប់ Element ទាំងអស់ប្រើប្រាស់ Font Khmer OS Siemreap ជាទូទៅ */
 body {
   font-family: "Khmer OS Siemreap", sans-serif !important;
-  background-color: #f3f4f6;
-  color: #1f2937;
+  background-color: #f8fafc;
+  color: #1e293b;
   -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
 }
 
-/* ជម្រើសបន្ថែមសម្រាប់កែសម្រួល Class ជាក់លាក់ */
 .khmer-font {
   font-family: "Khmer OS Siemreap", sans-serif !important;
 }
 
-/* រក្សាសញ្ញាព្រួញឡើងចុះ (Spinners) សម្រាប់ Input លេខ */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  opacity: 1;
+/* ធ្វើឱ្យ Input និង Button ងាយស្រួលចុចដោយម្រាមដៃនៅលើទូរសព្ទ */
+input,
+select,
+button {
+  touch-action: manipulation;
+  font-size: 14px !important; /* ការពារមិនឱ្យ iPhone ซูม (Zoom) ពេលចុចលើ Input */
 }
 
 @media print {
@@ -34,7 +35,7 @@ input[type="number"]::-webkit-outer-spin-button {
     top: 0;
     width: 100%;
     margin: 0;
-    padding: 15mm;
+    padding: 5mm;
     background: white;
     border: none !important;
     box-shadow: none !important;
