@@ -24,7 +24,7 @@ export default function InvoicePreview({ data }) {
   return (
     <div
       id="printable-invoice"
-      className="bg-white p-4 sm:p-8 rounded-2xl shadow-sm border border-gray-200 w-full max-w-2xl mx-auto khmer-font text-xs sm:text-sm"
+      className="bg-white p-4 sm:p-8 rounded-2xl shadow-sm border border-gray-200 w-full max-w-2xl mx-auto khmer-font text-xs sm:text-sm overflow-hidden"
     >
       {/* Company Header */}
       <div className="text-center space-y-1 mb-6">
@@ -45,14 +45,14 @@ export default function InvoicePreview({ data }) {
       <div className="grid grid-cols-2 gap-4 mb-4 text-xs">
         <div className="space-y-1">
           <div className="flex">
-            <span className="w-20 font-semibold text-gray-600">To</span>:{" "}
-            <span className="font-bold text-blue-900 flex-1 truncate">
+            <span className="w-16 font-semibold text-gray-600">To</span>:{" "}
+            <span className="font-bold text-blue-900 ml-1 truncate">
               {customer || "-"}
             </span>
           </div>
           <div className="flex">
-            <span className="w-20 font-semibold text-gray-600">Location</span>:{" "}
-            <span className="text-gray-700 flex-1 truncate">
+            <span className="w-16 font-semibold text-gray-600">Location</span>:{" "}
+            <span className="text-gray-700 ml-1 truncate">
               {location || "-"}
             </span>
           </div>
@@ -60,33 +60,38 @@ export default function InvoicePreview({ data }) {
         <div className="text-right space-y-1">
           <div>
             <span className="font-semibold text-gray-600">Date Issue:</span>{" "}
-            <span className="font-bold">{formatDate(dateIssue)}</span>
+            <span className="font-bold ml-1">{formatDate(dateIssue)}</span>
           </div>
           {marketing && (
             <div>
               <span className="font-semibold text-gray-600">Marketing:</span>{" "}
-              <span className="text-purple-700 font-semibold">{marketing}</span>
+              <span className="text-purple-700 font-semibold ml-1">
+                {marketing}
+              </span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Table with Horizontal Scroll for Mobile */}
-      <div className="overflow-x-auto border border-gray-300 rounded-lg mb-6">
-        <table className="w-full text-left text-xs whitespace-nowrap">
+      {/* Table Container (មាន Scroll ការពារធ្លាយអេក្រង់) */}
+      <div className="w-full overflow-x-auto border border-gray-800 mb-6 rounded">
+        {/* កំណត់ទំហំអប្បបរមា (min-w-[650px]) ដើម្បីកុំឱ្យអក្សរវាយគ្នាពេលអេក្រង់តូច */}
+        <table className="min-w-[650px] w-full text-left text-xs whitespace-nowrap">
           <thead>
-            <tr className="bg-gray-100 text-gray-700 border-b border-gray-300 text-[11px]">
-              <th className="p-2.5 text-center w-10">No</th>
-              <th className="p-2.5">Date</th>
-              <th className="p-2.5">Strength</th>
-              <th className="p-2.5">Quantity</th>
-              <th className="p-2.5">Unit Price</th>
-              <th className="p-2.5">Pump fee</th>
-              <th className="p-2.5">Delivery</th>
-              <th className="p-2.5 text-right">Amount</th>
+            <tr className="bg-gray-100 text-gray-900 border-b border-gray-800 text-[11px]">
+              <th className="p-2 border-r border-gray-800 text-center w-10">
+                No
+              </th>
+              <th className="p-2 border-r border-gray-800">Date</th>
+              <th className="p-2 border-r border-gray-800">Strength</th>
+              <th className="p-2 border-r border-gray-800">Quantity</th>
+              <th className="p-2 border-r border-gray-800">Unit Price</th>
+              <th className="p-2 border-r border-gray-800">Pump fee</th>
+              <th className="p-2 border-r border-gray-800">Delivery</th>
+              <th className="p-2 text-right">Amount</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-800">
             {items && items.length > 0 ? (
               items.map((it, idx) => {
                 const q = parseFloat(it.qty) || 0;
@@ -96,15 +101,29 @@ export default function InvoicePreview({ data }) {
                 const amount = q * p + pump + deliv;
 
                 return (
-                  <tr key={idx} className="hover:bg-gray-50">
-                    <td className="p-2.5 text-center">{idx + 1}</td>
-                    <td className="p-2.5">{formatDate(it.date)}</td>
-                    <td className="p-2.5 font-semibold">{it.strength}</td>
-                    <td className="p-2.5">{q.toFixed(1)} m³</td>
-                    <td className="p-2.5">${p.toFixed(2)}</td>
-                    <td className="p-2.5">${pump.toFixed(2)}</td>
-                    <td className="p-2.5">${deliv.toFixed(2)}</td>
-                    <td className="p-2.5 text-right font-bold text-blue-900">
+                  <tr key={idx} className="hover:bg-gray-50 text-gray-900">
+                    <td className="p-2 border-r border-gray-800 text-center">
+                      {idx + 1}
+                    </td>
+                    <td className="p-2 border-r border-gray-800">
+                      {formatDate(it.date)}
+                    </td>
+                    <td className="p-2 border-r border-gray-800 font-semibold">
+                      {it.strength}
+                    </td>
+                    <td className="p-2 border-r border-gray-800">
+                      {q.toFixed(1)} m³
+                    </td>
+                    <td className="p-2 border-r border-gray-800">
+                      ${p.toFixed(2)}
+                    </td>
+                    <td className="p-2 border-r border-gray-800">
+                      ${pump.toFixed(2)}
+                    </td>
+                    <td className="p-2 border-r border-gray-800">
+                      ${deliv.toFixed(2)}
+                    </td>
+                    <td className="p-2 text-right font-bold text-blue-900">
                       ${amount.toFixed(2)}
                     </td>
                   </tr>
@@ -118,13 +137,18 @@ export default function InvoicePreview({ data }) {
               </tr>
             )}
             {/* Total Row */}
-            <tr className="bg-gray-50 font-bold border-t border-gray-300">
-              <td colSpan="3" className="p-2.5 text-right">
+            <tr className="bg-gray-50 font-bold border-t border-gray-800">
+              <td
+                colSpan="3"
+                className="p-2 text-right border-r border-gray-800"
+              >
                 Total
               </td>
-              <td className="p-2.5">{totalQty.toFixed(1)} m³</td>
-              <td colSpan="3"></td>
-              <td className="p-2.5 text-right text-red-600">
+              <td className="p-2 border-r border-gray-800">
+                {totalQty.toFixed(1)} m³
+              </td>
+              <td colSpan="3" className="border-r border-gray-800"></td>
+              <td className="p-2 text-right text-red-600">
                 ${totalAmount.toFixed(2)}
               </td>
             </tr>
@@ -133,7 +157,7 @@ export default function InvoicePreview({ data }) {
       </div>
 
       {/* Signature Section */}
-      <div className="grid grid-cols-2 gap-8 pt-8 text-center text-xs">
+      <div className="grid grid-cols-2 gap-8 pt-6 text-center text-xs">
         <div className="space-y-12">
           <div>
             <p className="font-bold text-gray-800">MARKETING SIGNATURE</p>
