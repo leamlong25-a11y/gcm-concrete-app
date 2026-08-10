@@ -4,11 +4,18 @@ import InvoicePreview from "../components/invoice/InvoicePreview";
 export default function Reports() {
   const [invoices, setInvoices] = useState([]);
 
-  // State សម្រាប់ Filter
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  // States សម្រាប់ Filter និង Search ដូចក្នុងរូបភាព
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState("");
+  const [selectedMarketing, setSelectedMarketing] = useState("");
+  const [sortOption, setSortOption] = useState("newest");
+
+  // States សម្រាប់ជម្រើសក្នុង Dropdown
+  const [years, setYears] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [marketings, setMarketings] = useState([]);
 
   // State សម្រាប់ផ្ទុកទិន្នន័យពេលចុចមើល Preview (Modal)
   const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -23,33 +30,65 @@ export default function Reports() {
       const data = rawData ? JSON.parse(rawData) : [];
       const safeData = Array.isArray(data) ? data : [];
 
-      const sortedData = safeData.sort(
-        (a, b) => new Date(b.dateIssue || 0) - new Date(a.dateIssue || 0),
-      );
-      setInvoices(sortedData);
+      setInvoices(safeData);
 
-      // ទាញយកឈ្មោះអតិថិជនទាំងអស់សម្រាប់ដាក់ក្នុង Filter
-      let cSet = new Set();
+      // ទាញយកឆ្នាំ អតិថិជន និងទីផ្សារ ដែលមានក្នុងទិន្នន័យ
+      let ySet = new Set(),
+        cSet = new Set(),
+        mSet = new Set();
       safeData.forEach((inv) => {
+        if (inv && inv.dateIssue) ySet.add(inv.dateIssue.split("-")[0]);
         if (inv && inv.customer) cSet.add(inv.customer);
+        if (inv && inv.marketing) mSet.add(inv.marketing);
       });
+
+      setYears(Array.from(ySet).sort().reverse());
       setCustomers(Array.from(cSet).sort());
+      setMarketings(Array.from(mSet).sort());
     } catch (err) {
       console.error("Error loading data:", err);
       setInvoices([]);
     }
   };
 
-  // មុខងារច្រោះទិន្នន័យ (Filter Logic)
-  const filteredInvoices = invoices.filter((inv) => {
-    if (!inv) return false;
-    if (selectedCustomer && inv.customer !== selectedCustomer) return false;
+  // មុខងារច្រោះទិន្នន័យ (Filter) និងតម្រៀប (Sort)
+  const filteredInvoices = invoices
+    .filter((inv) => {
+      if (!inv) return false;
 
-    if (startDate && inv.dateIssue < startDate) return false;
-    if (endDate && inv.dateIssue > endDate) return false;
+      // ស្វែងរកតាមឈ្មោះ ឬទីតាំង
+      const term = searchTerm.toLowerCase();
+      const matchTerm =
+        inv.customer?.toLowerCase().includes(term) ||
+        inv.location?.toLowerCase().includes(term);
+      if (!matchTerm) return false;
 
-    return true;
-  });
+      // ច្រោះតាម Dropdown នីមួយៗ
+      if (selectedYear && !inv.dateIssue?.startsWith(selectedYear))
+        return false;
+      if (selectedMonth && inv.dateIssue?.split("-")[1] !== selectedMonth)
+        return false;
+      if (selectedCustomer && inv.customer !== selectedCustomer) return false;
+      if (selectedMarketing && inv.marketing !== selectedMarketing)
+        return false;
+
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortOption === "newest")
+        return new Date(b.dateIssue || 0) - new Date(a.dateIssue || 0);
+      if (sortOption === "oldest")
+        return new Date(a.dateIssue || 0) - new Date(b.dateIssue || 0);
+      if (sortOption === "amount-high")
+        return (b.revenue || 0) - (a.revenue || 0);
+      if (sortOption === "amount-low")
+        return (a.revenue || 0) - (b.revenue || 0);
+      if (sortOption === "qty-high")
+        return (b.totalQty || 0) - (a.totalQty || 0);
+      if (sortOption === "customer-az")
+        return (a.customer || "").localeCompare(b.customer || "");
+      return 0;
+    });
 
   // គណនាទិន្នន័យសរុបសម្រាប់ផ្ទាំង Summary ខាងលើ
   const totalQty = filteredInvoices.reduce(
@@ -76,57 +115,120 @@ export default function Reports() {
 
   return (
     <div className="space-y-6 fade-in pb-10 khmer-font">
-      {/* ផ្ទាំង Filter (ការច្រោះទិន្នន័យ) */}
-      <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-end">
-        <div className="flex-1 w-full">
-          <label className="block text-sm font-semibold text-gray-600 mb-1.5">
-            ចាប់ពីថ្ងៃទី
-          </label>
+      {/* ផ្ទាំង Filter ថ្មី (ដូចក្នុងរូបភាព) */}
+      <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div>
+            <h1 className="text-xl font-bold text-gray-800">
+              របាយការណ៍វិក្កយបត្រ (Invoice Report)
+            </h1>
+            <p className="text-xs text-gray-500 mt-0.5">
+              បញ្ជីរបាយការណ៍សង្ខេប និងលម្អិតនៃការចេញវិក្កយបត្រ
+            </p>
+          </div>
           <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="ស្វែងរកអតិថិជន ឬទីតាំង..."
+            className="w-full sm:w-72 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500"
           />
         </div>
-        <div className="flex-1 w-full">
-          <label className="block text-sm font-semibold text-gray-600 mb-1.5">
-            ដល់ថ្ងៃទី
-          </label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
-          />
+
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-3 border-t border-gray-100 text-xs">
+          <div>
+            <label className="block font-semibold text-gray-500 mb-1">
+              តម្រៀបតាមឆ្នាំ
+            </label>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl p-2.5 bg-gray-50 outline-none"
+            >
+              <option value="">ឆ្នាំទាំងអស់</option>
+              {years.map((y, i) => (
+                <option key={i} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block font-semibold text-gray-500 mb-1">
+              តម្រៀបតាមខែ
+            </label>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl p-2.5 bg-gray-50 outline-none"
+            >
+              <option value="">ខែទាំងអស់</option>
+              <option value="01">មករា</option>
+              <option value="02">កុម្ភៈ</option>
+              <option value="03">មីនា</option>
+              <option value="04">មេសា</option>
+              <option value="05">ឧសភា</option>
+              <option value="06">មិថុនា</option>
+              <option value="07">កក្កដា</option>
+              <option value="08">សីហា</option>
+              <option value="09">កញ្ញា</option>
+              <option value="10">តុលា</option>
+              <option value="11">វិច្ឆិកា</option>
+              <option value="12">ធ្នូ</option>
+            </select>
+          </div>
+          <div>
+            <label className="block font-semibold text-gray-500 mb-1">
+              អតិថិជន
+            </label>
+            <select
+              value={selectedCustomer}
+              onChange={(e) => setSelectedCustomer(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl p-2.5 bg-gray-50 outline-none"
+            >
+              <option value="">អតិថិជនទាំងអស់</option>
+              {customers.map((c, i) => (
+                <option key={i} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block font-semibold text-gray-500 mb-1">
+              ទីផ្សារ
+            </label>
+            <select
+              value={selectedMarketing}
+              onChange={(e) => setSelectedMarketing(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl p-2.5 bg-gray-50 outline-none"
+            >
+              <option value="">ទីផ្សារទាំងអស់</option>
+              {marketings.map((m, i) => (
+                <option key={i} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block font-semibold text-blue-700 mb-1">
+              ⚡ ការតម្រៀប (Sort By)
+            </label>
+            <select
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value)}
+              className="w-full border border-blue-200 rounded-xl p-2.5 bg-blue-50/50 outline-none font-semibold"
+            >
+              <option value="newest">ថ្ងៃបរិច្ឆេទ: ថ្មីទៅចាស់</option>
+              <option value="oldest">ថ្ងៃបរិច្ឆេទ: ចាស់ទៅថ្មី</option>
+              <option value="amount-high">ទឹកប្រាក់: ខ្ពស់ទៅទាប</option>
+              <option value="amount-low">ទឹកប្រាក់: ទាបទៅខ្ពស់</option>
+              <option value="qty-high">បរិមាណ (m³): ច្រើនទៅតិច</option>
+              <option value="customer-az">អតិថិជន: A-Z</option>
+            </select>
+          </div>
         </div>
-        <div className="flex-1 w-full">
-          <label className="block text-sm font-semibold text-gray-600 mb-1.5">
-            ជ្រើសរើសអតិថិជន
-          </label>
-          <select
-            value={selectedCustomer}
-            onChange={(e) => setSelectedCustomer(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
-          >
-            <option value="">អតិថិជនទាំងអស់</option>
-            {customers.map((c, i) => (
-              <option key={i} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          onClick={() => {
-            setStartDate("");
-            setEndDate("");
-            setSelectedCustomer("");
-          }}
-          className="px-4 py-2 bg-gray-100 text-gray-600 font-semibold rounded-xl hover:bg-gray-200 transition text-sm w-full sm:w-auto"
-        >
-          សម្អាត
-        </button>
       </div>
 
       {/* ផ្ទាំងសង្ខេបរបាយការណ៍ (Summary Cards) */}
@@ -165,16 +267,15 @@ export default function Reports() {
         </div>
       </div>
 
+      {/* តារាងទិន្នន័យរបាយការណ៍ */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-        {/* Header របស់របាយការណ៍ */}
         <div className="bg-blue-900 text-white p-4 rounded-t-2xl">
           <h2 className="text-lg font-bold flex items-center gap-2">
-            <span>📑</span> ១. របាយការណ៍វិក្កយបត្រសម្រាប់អតិថិជន (Customer
-            Invoice Report)
+            <span>📑</span> ១. តារាងលម្អិតនៃរបាយការណ៍អតិថិជន (Customer Invoice
+            Details)
           </h2>
         </div>
 
-        {/* តារាងទិន្នន័យរបាយការណ៍ */}
         <div className="overflow-x-auto rounded-b-2xl">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead>
