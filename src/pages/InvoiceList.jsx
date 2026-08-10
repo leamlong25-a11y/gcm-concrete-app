@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../services/firebase";
 import { ref, remove } from "firebase/database";
+import InvoicePreview from "../components/invoice/InvoicePreview";
 
 export default function InvoiceList() {
   const navigate = useNavigate();
@@ -17,6 +18,9 @@ export default function InvoiceList() {
   const [customers, setCustomers] = useState([]);
   const [marketings, setMarketings] = useState([]);
 
+  // State សម្រាប់ផ្ទុកទិន្នន័យពេលចុចមើល Preview
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -26,7 +30,6 @@ export default function InvoiceList() {
       const rawData = localStorage.getItem("gcm_data");
       const data = rawData ? JSON.parse(rawData) : [];
 
-      // ធានាថា data ជា Array ជានិច្ច ដើម្បីការពារការ Error
       const safeData = Array.isArray(data) ? data : [];
       setInvoices(safeData);
 
@@ -236,9 +239,13 @@ export default function InvoiceList() {
             <tbody className="divide-y divide-gray-100 text-gray-700 text-xs">
               {filteredInvoices.length > 0 ? (
                 filteredInvoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-blue-50/40 transition">
+                  <tr
+                    key={inv.id}
+                    onClick={() => setSelectedInvoice(inv)} // ចុចលើជួរនេះនឹងបង្ហាញ Modal
+                    className="hover:bg-blue-50/60 cursor-pointer transition"
+                  >
                     <td className="p-4 font-medium text-gray-600">
-                      {inv.displayDate}
+                      {inv.displayDate || inv.dateIssue}
                     </td>
                     <td className="p-4 font-bold text-blue-900">
                       {inv.customer}
@@ -259,13 +266,19 @@ export default function InvoiceList() {
                     </td>
                     <td className="p-4 text-center space-x-2">
                       <button
-                        onClick={() => handleEdit(inv.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(inv.id);
+                        }} // ការពារកុំឱ្យលោត Modal ពេលចុចកែប្រែ
                         className="px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl text-xs font-semibold hover:bg-amber-100 transition"
                       >
                         កែប្រែ
                       </button>
                       <button
-                        onClick={() => handleDelete(inv.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(inv.id);
+                        }} // ការពារកុំឱ្យលោត Modal ពេលចុចលុប
                         className="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-semibold hover:bg-red-100 transition"
                       >
                         លុប
@@ -284,6 +297,44 @@ export default function InvoiceList() {
           </table>
         </div>
       </div>
+
+      {/* Popup Modal បង្ហាញ Invoice Preview */}
+      {selectedInvoice && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-gray-100 w-full max-w-4xl max-h-[95vh] rounded-2xl shadow-2xl flex flex-col relative overflow-hidden">
+            {/* របារខាងលើ */}
+            <div className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+              <h3 className="font-bold text-gray-800 text-lg">
+                ព័ត៌មានលម្អិតវិក្កយបត្រ
+              </h3>
+              <button
+                onClick={() => setSelectedInvoice(null)}
+                className="p-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition"
+                title="បិទ"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+
+            {/* កន្លែងបង្ហាញវិក្កយបត្រ */}
+            <div className="overflow-y-auto p-4 sm:p-6 pb-20">
+              <InvoicePreview data={selectedInvoice} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
